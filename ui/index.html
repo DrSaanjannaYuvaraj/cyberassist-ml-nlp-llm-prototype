@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CyberAssist</title>
+<style>
+body{font-family:system-ui;background:#eef2f7;color:#172338;
+max-width:960px;margin:40px auto;padding:0 20px}
+section{background:white;padding:24px;border-radius:12px;margin:20px 0}
+textarea{box-sizing:border-box;width:100%;min-height:150px;
+padding:12px;font:inherit;border:1px solid #9baabd;border-radius:8px}
+button{background:#175cd3;color:white;border:0;border-radius:8px;
+padding:12px 22px;font:inherit;cursor:pointer;margin-top:12px}
+button:disabled{opacity:.6;cursor:wait}
+.grid{display:flex;gap:20px;flex-wrap:wrap}
+.card{flex:1;background:#eef2f7;padding:16px;border-radius:8px}
+h1{margin-bottom:6px}h2{font-size:1.15rem}
+li{margin-bottom:8px}
+#status{white-space:pre-wrap}
+.warning{color:#704500}
+</style>
+</head>
+<body>
+<h1>CyberAssist</h1>
+<p>Email analysis with a neural classifier and independent LLM assessment.</p>
+<p class="warning">Development prototype · Synthetic inputs only · Human review required</p>
+
+
+<section>
+<form id="loginForm">
+<h2>Analyst login</h2>
+<p>
+<label for="username">Username</label><br>
+<input id="username" autocomplete="username" required
+minlength="3" maxlength="40">
+</p>
+<p>
+<label for="password">Password</label><br>
+<input id="password" type="password" autocomplete="current-password"
+required maxlength="256">
+</p>
+<button id="loginButton" type="submit">Sign in</button>
+</form>
+<p id="loginStatus" role="status" aria-live="polite">Signed out.</p>
+<button id="logoutButton" type="button" hidden>Sign out</button>
+</section>
+
+
+<section>
+<h2>Saved analyses</h2>
+<button id="loadHistory" type="button">Refresh history</button>
+<p id="historyStatus" role="status"></p>
+<ul id="historyList"></ul>
+<pre id="savedRecord" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+</section>
+
+<section>
+<h2>Security alert analysis</h2>
+<label for="alertText">Synthetic alert</label>
+<textarea id="alertText" maxlength="4000"
+placeholder="Paste a synthetic security alert"></textarea>
+<button id="analyseAlert" type="button">Analyse alert</button>
+<p id="alertStatus" role="status" aria-live="polite"></p>
+
+<form id="alertReviewForm" hidden>
+<h2>Security alert review</h2>
+<p>
+<label for="alertDecision">Decision</label>
+<select id="alertDecision">
+<option value="approve">Approve analysis</option>
+<option value="correct">Correct analysis</option>
+<option value="reject">Reject analysis</option>
+</select>
+</p>
+<p>
+<label for="alertLabel">Final assessment</label>
+<select id="alertLabel">
+<option value="insufficient_information">Insufficient information</option>
+<option value="suspicious">Suspicious</option>
+<option value="no_clear_threat">No clear threat</option>
+</select>
+</p>
+<label for="alertNotes">Reason</label>
+<textarea id="alertNotes" required maxlength="2000"></textarea>
+<button id="saveAlertReview" type="submit">Save alert review</button>
+<p id="alertReviewStatus" role="status"></p>
+</form>
+
+<pre id="alertResult"
+style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+</section>
+<section>
+<label for="email"><strong>Email text</strong></label>
+<textarea id="email" maxlength="4000"
+placeholder="Paste a synthetic email here"></textarea>
+<button id="analyse">Analyse email</button>
+<p id="status" role="status" aria-live="polite"></p>
+</section>
+
+<section id="results" hidden>
+<div class="grid">
+<div class="card">
+<strong>Classifier prediction</strong>
+<p id="prediction"></p>
+</div>
+<div class="card">
+<strong>LLM assessment</strong>
+<p id="assessment"></p>
+</div>
+<div class="card">
+<strong>Comparison</strong>
+<p id="comparison"></p>
+</div>
+</div>
+
+<h2>Explanation</h2>
+<p id="explanation"></p>
+<h2>Quoted evidence</h2>
+<ul id="evidence"></ul>
+<h2>Suggested checks</h2>
+<ul id="checks"></ul>
+<h2>Limitations</h2>
+<p id="limitations"></p>
+<p id="quoteWarning" class="warning"></p>
+<p id="timing"></p>
+<p id="record"></p>
+
+<h2>Analyst review</h2>
+<p>Record your assessment of this analysis. This does not retrain the model.</p>
+<form id="reviewForm">
+<p>
+<label for="decision">Review decision</label>
+<select id="decision">
+<option value="approve">Approve analysis</option>
+<option value="correct">Correct analysis</option>
+<option value="reject">Reject analysis</option>
+</select>
+</p>
+<p>
+<label for="finalLabel">Final email classification</label>
+<select id="finalLabel">
+<option value="uncertain">Uncertain</option>
+<option value="phishing">Phishing</option>
+<option value="legitimate">Legitimate</option>
+</select>
+</p>
+<label for="reviewNotes">Reason for your decision</label>
+<textarea id="reviewNotes" required maxlength="2000"
+placeholder="Explain your assessment"></textarea>
+<button id="saveReview" type="submit">Save review</button>
+<p id="reviewStatus" role="status" aria-live="polite"></p>
+</form>
+
+<button id="download">Download analysis JSON</button>
+</section>
+
+<script>
+let latest = null;
+const el = id => document.getElementById(id);
+
+function showList(id, items) {
+  el(id).replaceChildren();
+  for (const text of items || []) {
+    const item = document.createElement("li");
+    item.textContent = text;
+    el(id).appendChild(item);
+  }
+}
+
+el("analyse").addEventListener("click", async () => {
+  if (!authToken) {
+    clearLogin("Please sign in first.");
+    return;
+  }
+  const requestToken = authToken;
+  const text = el("email").value.trim();
+  if (!text) {
+    el("status").textContent = "Please enter an email.";
+    return;
+  }
+
+  el("analyse").disabled = true;
+  el("results").hidden = true;
+  latest = null;
+  el("status").textContent = "Analysing… Please wait.";
+
+  try {
+    const response = await fetch("/analyze/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authToken}`
+      },
+      body: JSON.stringify({text})
+    });
+
+    if (response.status === 401) {
+      clearLogin("Session expired. Please sign in again.");
+      return;
+    }
+    if (!response.ok) {
+      throw new Error(`Request failed (${response.status}). Please retry.`);
+    }
+
+    const data = await response.json();
+    if (authToken !== requestToken) return;
+    latest = data;
+    el("reviewForm").reset();
+    el("reviewStatus").textContent = "";
+
+    const answer = data.llm_answer;
+
+    el("prediction").textContent = data.classifier_prediction;
+    el("assessment").textContent =
+      answer ? answer.assessment : "Unavailable";
+    el("comparison").textContent = data.comparison || "Unavailable";
+    el("explanation").textContent =
+      answer ? answer.explanation : "LLM analysis failed.";
+    showList("evidence", answer ? answer.evidence : []);
+    showList("checks", answer ? answer.suggested_checks : []);
+    el("limitations").textContent =
+      answer ? answer.limitations : (data.llm_error || "No explanation available.");
+
+    const quotes = data.unsupported_evidence_quotes;
+    el("quoteWarning").textContent = !answer
+      ? "LLM output unavailable. Review the classifier result manually."
+      : quotes && quotes.length
+        ? "Some quoted evidence did not match the input. Review required."
+        : "Quoted evidence matched the input; this does not establish correctness.";
+
+    el("timing").textContent =
+      `Classifier: ${data.classifier_seconds}s · ` +
+      `LLM: ${data.llm_seconds}s · Total: ${data.total_seconds}s`;
+    el("record").textContent = `Analysis ID: ${data.id}`;
+    el("results").hidden = false;
+    el("status").textContent =
+      "Analysis returned. Review before taking any action.";
+  } catch (error) {
+    el("status").textContent = error.message;
+  } finally {
+    el("analyse").disabled = !authToken;
+  }
+});
+
+el("download").addEventListener("click", () => {
+  if (!latest) return;
+  const blob = new Blob([JSON.stringify(latest, null, 2)], {
+    type: "application/json"
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `cyberassist_${latest.id}.json`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+let authToken = null;
+let expiryTimer = null;
+
+function clearLogin(message = "Signed out.") {
+  authToken = null;
+  latestAlert = null;
+  el("alertReviewForm").hidden = true;
+  el("alertReviewForm").reset();
+  el("alertReviewStatus").textContent = "";
+
+  el("alertText").value = "";
+  el("alertResult").textContent = "";
+  el("alertStatus").textContent = "";
+
+  el("historyList").replaceChildren();
+  el("savedRecord").textContent = "";
+  el("historyStatus").textContent = "";
+
+  clearTimeout(expiryTimer);
+  latest = null;
+  el("loginForm").hidden = false;
+  el("logoutButton").hidden = true;
+  el("analyse").disabled = true;
+  el("results").hidden = true;
+  el("email").value = "";
+  el("status").textContent = "";
+  el("loginStatus").textContent = message;
+}
+
+el("analyse").disabled = true;
+
+el("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  el("loginButton").disabled = true;
+  el("loginStatus").textContent = "Signing in…";
+
+  try {
+    const username = el("username").value.trim();
+    const response = await fetch("/auth/login", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        username,
+        password: el("password").value
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        response.status === 429
+          ? "Too many attempts. Wait one minute."
+          : "Sign-in failed. Check your details."
+      );
+    }
+
+    const data = await response.json();
+    authToken = data.access_token;
+    el("loginForm").hidden = true;
+    el("logoutButton").hidden = false;
+    el("analyse").disabled = false;
+    el("loginStatus").textContent = `Signed in as ${username}.`;
+
+    expiryTimer = setTimeout(
+      () => clearLogin("Session expired. Please sign in again."),
+      data.expires_in * 1000
+    );
+  } catch (error) {
+    clearLogin(error.message);
+  } finally {
+    el("password").value = "";
+    el("loginButton").disabled = false;
+  }
+});
+
+el("logoutButton").addEventListener("click", async () => {
+  const token = authToken;
+  clearLogin();
+  try {
+    const response = await fetch("/auth/logout", {
+      method: "POST",
+      headers: {"Authorization": `Bearer ${token}`}
+    });
+    if (!response.ok && response.status !== 401) {
+      throw new Error("Logout failed.");
+    }
+  } catch {
+    el("loginStatus").textContent =
+      "Signed out locally. Server logout could not be confirmed.";
+  }
+});
+
+
+el("reviewForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!latest || !authToken) {
+    el("reviewStatus").textContent = "Sign in and analyse an email first.";
+    return;
+  }
+
+  const notes = el("reviewNotes").value.trim();
+  if (!notes) {
+    el("reviewStatus").textContent = "Please enter a reason.";
+    return;
+  }
+
+  const analysisId = latest.id;
+  const token = authToken;
+  el("saveReview").disabled = true;
+  el("reviewStatus").textContent = "Saving…";
+
+  try {
+    const response = await fetch(
+      `/analyses/${encodeURIComponent(analysisId)}/reviews`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          decision: el("decision").value,
+          final_label: el("finalLabel").value,
+          notes
+        })
+      }
+    );
+
+    if (response.status === 401) {
+      clearLogin("Session expired. Please sign in again.");
+      return;
+    }
+    if (!response.ok) {
+      throw new Error(`Review could not be saved (${response.status}).`);
+    }
+
+    const review = await response.json();
+    if (authToken !== token || !latest || latest.id !== analysisId) return;
+
+    el("reviewStatus").textContent =
+      `Review ${review.review_id} saved for ${review.analyst} at ${review.created_utc}.`;
+  } catch (error) {
+    if (authToken === token && latest && latest.id === analysisId) {
+      el("reviewStatus").textContent = error.message;
+    }
+  } finally {
+    el("saveReview").disabled = false;
+  }
+});
+
+
+el("loadHistory").addEventListener("click", async () => {
+  el("historyList").replaceChildren();
+  el("savedRecord").textContent = "";
+  if (!authToken) {
+    el("historyStatus").textContent = "Please sign in first.";
+    return;
+  }
+  const token = authToken;
+  el("historyStatus").textContent = "Loading…";
+  try {
+    const response = await fetch("/history", {
+      headers: {"Authorization": `Bearer ${token}`}
+    });
+    if (!response.ok) throw new Error(`History unavailable (${response.status}).`);
+    const records = await response.json();
+    if (authToken !== token) return;
+
+    el("historyStatus").textContent =
+      `${records.length} saved analyses shown, newest first (maximum 50).`;
+
+    for (const record of records) {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.textContent =
+        `${record.created_utc} · ${record.review_count} reviews · Open`;
+
+      button.addEventListener("click", async () => {
+        if (authToken !== token) return;
+        try {
+          const response = await fetch(
+            `/analyses/${encodeURIComponent(record.id)}`,
+            {headers: {"Authorization": `Bearer ${token}`}}
+          );
+          if (!response.ok) throw new Error("Saved analysis unavailable.");
+          const saved = await response.json();
+          if (authToken !== token) return;
+          
+          const reviewsResponse = await fetch(
+            `/analyses/${encodeURIComponent(record.id)}/reviews`,
+            {headers: {"Authorization": `Bearer ${token}`}}
+          );
+          if (!reviewsResponse.ok) {
+            throw new Error("Review history unavailable.");
+          }
+          const reviews = await reviewsResponse.json();
+          if (authToken !== token) return;
+
+          el("savedRecord").textContent = JSON.stringify(
+            {analysis: saved, reviews}, null, 2
+          );
+
+        } catch (error) {
+          if (authToken === token) {
+            el("historyStatus").textContent = error.message;
+          }
+        }
+      });
+
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Delete";
+      deleteButton.style.marginLeft = "10px";
+      deleteButton.style.background = "#b42318";
+
+      deleteButton.addEventListener("click", async () => {
+        if (authToken !== token) return;
+        if (!confirm("Delete this saved analysis and all its reviews?")) return;
+
+        deleteButton.disabled = true;
+        try {
+          const response = await fetch(
+            `/analyses/${encodeURIComponent(record.id)}`,
+            {
+              method: "DELETE",
+              headers: {"Authorization": `Bearer ${token}`}
+            }
+          );
+
+          if (response.status === 401) {
+            clearLogin("Session expired. Please sign in again.");
+            return;
+          }
+          if (!response.ok) {
+            throw new Error(`Deletion failed (${response.status}).`);
+          }
+          if (authToken !== token) return;
+
+          if (latest && latest.id === record.id) {
+            latest = null;
+            el("results").hidden = true;
+          }
+          if (latestAlert && latestAlert.id === record.id) {
+            latestAlert = null;
+            el("alertResult").textContent = "";
+            el("alertReviewForm").hidden = true;
+          }
+
+          el("savedRecord").textContent = "";
+          el("loadHistory").click();
+        } catch (error) {
+          if (authToken === token) {
+            el("historyStatus").textContent = error.message;
+          }
+        } finally {
+          deleteButton.disabled = false;
+        }
+      });
+
+      item.appendChild(button);
+      item.appendChild(deleteButton);
+
+      el("historyList").appendChild(item);
+    }
+  } catch (error) {
+    if (authToken === token) {
+      el("historyStatus").textContent = error.message;
+    }
+  }
+});
+
+
+el("analyseAlert").addEventListener("click", async () => {
+  if (!authToken) {
+    el("alertStatus").textContent = "Please sign in first.";
+    return;
+  }
+
+  const text = el("alertText").value.trim();
+  if (!text) {
+    el("alertStatus").textContent = "Please enter an alert.";
+    return;
+  }
+
+  const token = authToken;
+  el("analyseAlert").disabled = true;
+  el("alertResult").textContent = "";
+  el("alertStatus").textContent = "Analysing alert…";
+  latestAlert = null;
+  el("alertReviewForm").hidden = true;
+
+
+  try {
+    const response = await fetch("/analyze/alert", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({text})
+    });
+
+    if (response.status === 401) {
+      clearLogin("Session expired. Please sign in again.");
+      return;
+    }
+    if (!response.ok) {
+      throw new Error(`Alert analysis failed (${response.status}).`);
+    }
+
+    const result = await response.json();
+    if (authToken !== token) return;
+
+    el("alertResult").textContent = JSON.stringify(result, null, 2);
+    latestAlert = result;
+    el("alertReviewForm").reset();
+    el("alertReviewStatus").textContent = "";
+    el("alertReviewForm").hidden = false;
+
+    el("alertStatus").textContent = result.llm_error
+      ? "Record saved, but LLM analysis failed. Review the error."
+      : "Alert analysis saved. Human review required.";
+  } catch (error) {
+    if (authToken === token) {
+      el("alertStatus").textContent = error.message;
+    }
+  } finally {
+    el("analyseAlert").disabled = false;
+  }
+});
+
+
+let latestAlert = null;
+
+el("alertReviewForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!latestAlert || !authToken) return;
+
+  const notes = el("alertNotes").value.trim();
+  if (!notes) {
+    el("alertReviewStatus").textContent = "Please enter a reason.";
+    return;
+  }
+
+  const id = latestAlert.id;
+  const token = authToken;
+  el("saveAlertReview").disabled = true;
+  el("alertReviewStatus").textContent = "Saving…";
+
+  try {
+    const response = await fetch(
+      `/analyses/${encodeURIComponent(id)}/alert-reviews`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          decision: el("alertDecision").value,
+          final_label: el("alertLabel").value,
+          notes
+        })
+      }
+    );
+
+    if (response.status === 401) {
+      clearLogin("Session expired. Please sign in again.");
+      return;
+    }
+    if (!response.ok) throw new Error(`Save failed (${response.status}).`);
+
+    const review = await response.json();
+    if (authToken !== token || latestAlert?.id !== id) return;
+
+    el("alertReviewStatus").textContent =
+      `Review ${review.review_id} saved for ${review.analyst}.`;
+  } catch (error) {
+    if (authToken === token && latestAlert?.id === id) {
+      el("alertReviewStatus").textContent = error.message;
+    }
+  } finally {
+    el("saveAlertReview").disabled = false;
+  }
+});
+
+</script>
+</body>
+</html>

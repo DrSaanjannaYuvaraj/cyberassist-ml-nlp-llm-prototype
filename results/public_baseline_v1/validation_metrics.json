@@ -1,0 +1,60 @@
+{
+  "evaluation_split": "validation",
+  "train_rows": 12241,
+  "validation_rows": 2623,
+  "classification_report": {
+    "legitimate": {
+      "precision": 0.9813365442504516,
+      "recall": 0.9920876445526476,
+      "f1-score": 0.986682808716707,
+      "support": 1643.0
+    },
+    "phishing": {
+      "precision": 0.9864864864864865,
+      "recall": 0.9683673469387755,
+      "f1-score": 0.9773429454170958,
+      "support": 980.0
+    },
+    "accuracy": 0.9832253145253527,
+    "macro avg": {
+      "precision": 0.983911515368469,
+      "recall": 0.9802274957457116,
+      "f1-score": 0.9820128770669014,
+      "support": 2623.0
+    },
+    "weighted avg": {
+      "precision": 0.9832606553413071,
+      "recall": 0.9832253145253527,
+      "f1-score": 0.9831932677202834,
+      "support": 2623.0
+    }
+  },
+  "majority_baseline_accuracy": 0.6263820053374,
+  "confusion_matrix_label_order": [
+    "legitimate",
+    "phishing"
+  ],
+  "confusion_matrix": [
+    [
+      1630,
+      13
+    ],
+    [
+      31,
+      949
+    ]
+  ],
+  "training_seconds": 9.241548005999903,
+  "batch_prediction_seconds": 0.6811262609999176,
+  "parameters": {
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "max_features": 50000,
+    "sublinear_tf": true,
+    "logistic_regression_C": 1.0,
+    "random_seed": 42
+  }
+}

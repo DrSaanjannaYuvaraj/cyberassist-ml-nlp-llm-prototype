@@ -1,0 +1,98 @@
+{
+  "logistic_regression": {
+    "classification_report": {
+      "legitimate": {
+        "precision": 0.9783393501805054,
+        "recall": 0.9890510948905109,
+        "f1-score": 0.9836660617059891,
+        "support": 1644.0
+      },
+      "phishing": {
+        "precision": 0.9812889812889813,
+        "recall": 0.963265306122449,
+        "f1-score": 0.972193614830072,
+        "support": 980.0
+      },
+      "accuracy": 0.979420731707317,
+      "macro avg": {
+        "precision": 0.9798141657347434,
+        "recall": 0.97615820050648,
+        "f1-score": 0.9779298382680306,
+        "support": 2624.0
+      },
+      "weighted avg": {
+        "precision": 0.979440965457299,
+        "recall": 0.979420731707317,
+        "f1-score": 0.9793813826136115,
+        "support": 2624.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        1626,
+        18
+      ],
+      [
+        36,
+        944
+      ]
+    ],
+    "matrix_label_order": [
+      "legitimate",
+      "phishing"
+    ],
+    "batch_prediction_seconds": 0.6283748030000424
+  },
+  "pytorch": {
+    "classification_report": {
+      "legitimate": {
+        "precision": 0.989084293511219,
+        "recall": 0.9920924574209246,
+        "f1-score": 0.9905860917096873,
+        "support": 1644.0
+      },
+      "phishing": {
+        "precision": 0.9866666666666667,
+        "recall": 0.9816326530612245,
+        "f1-score": 0.9841432225063939,
+        "support": 980.0
+      },
+      "accuracy": 0.9881859756097561,
+      "macro avg": {
+        "precision": 0.9878754800889429,
+        "recall": 0.9868625552410746,
+        "f1-score": 0.9873646571080406,
+        "support": 2624.0
+      },
+      "weighted avg": {
+        "precision": 0.988181368851287,
+        "recall": 0.9881859756097561,
+        "f1-score": 0.9881798372054085,
+        "support": 2624.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        1631,
+        13
+      ],
+      [
+        18,
+        962
+      ]
+    ],
+    "matrix_label_order": [
+      "legitimate",
+      "phishing"
+    ],
+    "batch_prediction_seconds": 0.812477511999532
+  },
+  "evaluation_details": {
+    "split": "test",
+    "rows": 2624,
+    "retrained": false,
+    "pytorch_selected_epoch": 2,
+    "timing": "Single batch pass per model, including text transformation; excludes data and model loading. Not a latency benchmark.",
+    "limitations": "Agreement with source labels, not independently verified truth. Normalised exact duplicates removed; related messages and near-duplicates may remain across splits."
+  }
+}

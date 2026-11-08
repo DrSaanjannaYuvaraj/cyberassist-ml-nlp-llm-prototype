@@ -1,0 +1,20 @@
+[
+  {
+    "id": "A1",
+    "alert": "85 failed SSH logins against admin in two minutes from 203.0.113.10. No successful login recorded. Source authorisation is unknown.",
+    "expected_assessment": "suspicious",
+    "expected_reason": "Possible password guessing. Successful compromise is not established."
+  },
+  {
+    "id": "A2",
+    "alert": "The backup service transferred 8 GB to its approved backup destination during its scheduled window. The job completed successfully. No other anomalies reported.",
+    "expected_assessment": "no_clear_threat",
+    "expected_reason": "The supplied facts are consistent with an authorised backup."
+  },
+  {
+    "id": "A3",
+    "alert": "One successful login from a new country. Device identity, VPN status, travel information and subsequent account activity are unavailable.",
+    "expected_assessment": "insufficient_information",
+    "expected_reason": "Additional context is required to assess whether the login is unauthorised."
+  }
+]

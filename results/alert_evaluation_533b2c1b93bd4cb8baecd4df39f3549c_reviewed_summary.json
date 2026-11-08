@@ -1,0 +1,14 @@
+{
+  "prompt_version": "security_alert_v2",
+  "examples": 6,
+  "reference_matches": 4,
+  "failed_requests": 0,
+  "responses_with_unmatched_quotes": 1,
+  "median_seconds": 8.431000000000001,
+  "p95_seconds": 9.716,
+  "limitation": "Six synthetic examples with author-assigned labels. Timings cover serial local LLM requests, including any model loading. Manual explanation review is still required.",
+  "manual_review_status": "All six responses reviewed.",
+  "responses_with_unsupported_claims": 2,
+  "responses_with_exact_quote_failures": 1,
+  "review_limitation": "Qualitative review of six synthetic examples; no independent second reviewer."
+}

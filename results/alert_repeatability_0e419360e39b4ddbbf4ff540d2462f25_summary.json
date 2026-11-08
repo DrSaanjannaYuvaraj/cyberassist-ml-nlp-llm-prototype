@@ -1,0 +1,12 @@
+{
+  "prompt_version": "security_alert_v2",
+  "requests": 5,
+  "successful_requests": 5,
+  "failed_requests": 0,
+  "assessment_counts": {
+    "insufficient_information": 5
+  },
+  "median_successful_seconds": 8.702,
+  "p95_successful_seconds": 9.362,
+  "limitations": "Five sequential requests for one repeated synthetic input. Includes any model loading and may benefit from prompt caching. Not an accuracy, concurrency or capacity benchmark."
+}

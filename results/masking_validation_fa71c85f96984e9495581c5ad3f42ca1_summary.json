@@ -1,0 +1,13 @@
+{
+  "split": "validation",
+  "rows": 2623,
+  "emails_with_address_matches": 387,
+  "total_address_matches": 837,
+  "changed_predictions": 0,
+  "original_accuracy": 0.9919939001143728,
+  "masked_accuracy": 0.9919939001143728,
+  "original_phishing_recall": 0.9908163265306122,
+  "masked_phishing_recall": 0.9908163265306122,
+  "retrained": false,
+  "scope": "Classifier only; does not evaluate LLM explanation quality."
+}

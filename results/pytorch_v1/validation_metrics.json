@@ -1,0 +1,88 @@
+{
+  "classification_report": {
+    "legitimate": {
+      "precision": 0.9945121951219512,
+      "recall": 0.992696287279367,
+      "f1-score": 0.9936034115138592,
+      "support": 1643.0
+    },
+    "phishing": {
+      "precision": 0.987792472024415,
+      "recall": 0.9908163265306122,
+      "f1-score": 0.9893020886398369,
+      "support": 980.0
+    },
+    "accuracy": 0.9919939001143728,
+    "macro avg": {
+      "precision": 0.9911523335731831,
+      "recall": 0.9917563069049896,
+      "f1-score": 0.9914527500768481,
+      "support": 2623.0
+    },
+    "weighted avg": {
+      "precision": 0.9920015856535618,
+      "recall": 0.9919939001143728,
+      "f1-score": 0.9919963598872706,
+      "support": 2623.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      1631,
+      12
+    ],
+    [
+      9,
+      971
+    ]
+  ],
+  "selected_epoch": 2,
+  "training_and_validation_seconds": 27.355348983000113,
+  "history": [
+    {
+      "epoch": 1,
+      "training_loss": 0.2583385779495046,
+      "validation_macro_f1": 0.9881869471100052
+    },
+    {
+      "epoch": 2,
+      "training_loss": 0.0369645372472418,
+      "validation_macro_f1": 0.9914527500768481
+    },
+    {
+      "epoch": 3,
+      "training_loss": 0.01364773501284538,
+      "validation_macro_f1": 0.9902256946600916
+    },
+    {
+      "epoch": 4,
+      "training_loss": 0.0067053963570597565,
+      "validation_macro_f1": 0.9902256946600916
+    },
+    {
+      "epoch": 5,
+      "training_loss": 0.00430502168561721,
+      "validation_macro_f1": 0.9894068007227197
+    },
+    {
+      "epoch": 6,
+      "training_loss": 0.0029008393110374164,
+      "validation_macro_f1": 0.9885872166383849
+    },
+    {
+      "epoch": 7,
+      "training_loss": 0.002189929108703166,
+      "validation_macro_f1": 0.9889970951933583
+    },
+    {
+      "epoch": 8,
+      "training_loss": 0.001619487973278055,
+      "validation_macro_f1": 0.9885872166383849
+    }
+  ],
+  "seed": 42,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "weight_decay": 0.01,
+  "representation": "Training-fitted baseline TF-IDF"
+}

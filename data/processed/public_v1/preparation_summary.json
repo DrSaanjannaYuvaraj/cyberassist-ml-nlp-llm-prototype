@@ -1,0 +1,35 @@
+{
+  "source_sha256": "18ef4fff1acb8986f0ab01e83ede6025420c829656af5a377560fce17e153b97",
+  "original_rows": 18650,
+  "removed_empty": 19,
+  "removed_conflicting_rows": 533,
+  "removed_oversized_rows": 27,
+  "removed_duplicate_rows": 583,
+  "retained_rows": 17488,
+  "max_characters": 50000,
+  "random_seed": 42,
+  "limitation": "Source labels retained without independent verification. Normalised exact duplicates removed; near-duplicates and related email threads may remain.",
+  "splits": {
+    "train": {
+      "rows": 12241,
+      "labels": {
+        "legitimate": 7669,
+        "phishing": 4572
+      }
+    },
+    "validation": {
+      "rows": 2623,
+      "labels": {
+        "legitimate": 1643,
+        "phishing": 980
+      }
+    },
+    "test": {
+      "rows": 2624,
+      "labels": {
+        "legitimate": 1644,
+        "phishing": 980
+      }
+    }
+  }
+}
